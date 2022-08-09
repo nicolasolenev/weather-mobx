@@ -1,23 +1,48 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect } from 'react';
+import * as ls from 'local-storage';
+
+import './App.scss';
+import { Search } from './components/search';
+import Info from './components/info';
+import Locations from './components/locations';
+import weather from './store/weather';
 
 function App() {
+  const onUnloadHandler = () => {
+    ls.set('weather', {
+      selectedCity: weather.selectedCity,
+      favoriteCities: weather.favoriteCities,
+    });
+  };
+
+  useEffect(() => {
+    window.addEventListener('unload', onUnloadHandler);
+    return () => window.removeEventListener('unload', onUnloadHandler);
+  });
+
+  useEffect(() => {
+    const geo = navigator.geolocation;
+
+    const successGeo = async ({ coords }) => {
+      weather.fetchWeather({ coords });
+    };
+
+    const denyGeo = () => {
+      weather.fetchWeather({ city: weather.selectedCity });
+    };
+
+    geo.getCurrentPosition(successGeo, denyGeo);
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container">
+      <div className="weather">
+        <Search />
+        <div className="weather__container">
+          <Info />
+          <Locations />
+        </div>
+      </div>
     </div>
   );
 }
